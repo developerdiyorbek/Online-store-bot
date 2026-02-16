@@ -1,6 +1,7 @@
 import bot from "./bot.js";
 import {
   addCategory,
+  editCategory,
   paginationCategory,
   removeCategory,
   showCategory,
@@ -27,5 +28,10 @@ bot.on("callback_query", async (query) => {
   if (data.includes("delete_category-")) {
     const id = data.split("-")[1];
     removeCategory(chat_id, id);
+  }
+
+  if (data.includes("edit_category-")) {
+    const id = data.split("-")[1];
+    editCategory(chat_id, id);
   }
 });

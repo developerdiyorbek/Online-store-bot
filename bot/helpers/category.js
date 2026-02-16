@@ -255,6 +255,36 @@ const removeCategory = async (chat_id, category_id) => {
   }
 };
 
+const editCategory = async (chat_id, category_id) => {
+  const user = await UserModel.findOne({ chat_id });
+  const category = await CategoryModel.findById(category_id).lean();
+  await UserModel.findByIdAndUpdate(
+    user._id,
+    { action: `edit_category-${category_id}` },
+    { returnDocument: "after" },
+  );
+
+  bot.sendMessage(chat_id, `${category.title} turkumga yangi nom kiriting`);
+};
+
+const saveCategory = async (chat_id, title) => {
+  const user = await UserModel.findOne({ chat_id });
+  let category_id = user.action.split("-")[1];
+
+  await UserModel.findByIdAndUpdate(
+    user._id,
+    { action: "menu" },
+    { returnDocument: "after" },
+  );
+
+  await CategoryModel.findByIdAndUpdate(
+    category_id,
+    { title: title },
+    { returnDocument: "after" },
+  );
+  bot.sendMessage(chat_id, `Turkum yangilandi. Menyudan tanlang`);
+};
+
 export {
   getAllCategories,
   addCategory,
@@ -262,4 +292,6 @@ export {
   paginationCategory,
   showCategory,
   removeCategory,
+  editCategory,
+  saveCategory,
 };

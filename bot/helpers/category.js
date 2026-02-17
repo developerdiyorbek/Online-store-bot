@@ -4,7 +4,7 @@ import UserModel from "../../models/user.model.js";
 import bot from "../bot.js";
 import { clearDraftProduct } from "./product.js";
 
-const getAllCategories = async (chat_id, page = 1) => {
+const getAllCategories = async (chat_id, page = 1, message_id = null) => {
   clearDraftProduct(chat_id); // draft mahsulotlarni tozalash
 
   const user = await UserModel.findOne({ chat_id });
@@ -12,7 +12,7 @@ const getAllCategories = async (chat_id, page = 1) => {
   let limit = 5;
   let skip = (page - 1) * limit;
 
-  if (page === 1) {
+  if (page === 1 && skip > 0) {
     await UserModel.findByIdAndUpdate(
       user._id,
       { action: "category-1" },
@@ -47,36 +47,48 @@ const getAllCategories = async (chat_id, page = 1) => {
     },
   ]);
 
-  bot.sendMessage(chat_id, `Kataloglar ro'yxati`, {
-    reply_markup: {
-      remove_keyboard: true,
-      inline_keyboard: [
-        ...lists,
-        [
+  const inline_keyboard = [
+    ...lists,
+    [
+      {
+        text: "Orqaga",
+        callback_data: page > 1 ? "back_category" : page,
+      },
+      {
+        text: page,
+        callback_data: `${page}`,
+      },
+      {
+        text: "Keyingi",
+        callback_data: limit == categories.length ? "next_category" : page,
+      },
+    ],
+    user?.admin
+      ? [
           {
-            text: "Orqaga",
-            callback_data: page > 1 ? "back_category" : page,
+            text: "Yangi kategoriya qo'shish",
+            callback_data: "add_category",
           },
-          {
-            text: page,
-            callback_data: `${page}`,
-          },
-          {
-            text: "Keyingi",
-            callback_data: limit == categories.length ? "next_category" : page,
-          },
-        ],
-        user?.admin
-          ? [
-              {
-                text: "Yangi kategoriya qo'shish",
-                callback_data: "add_category",
-              },
-            ]
-          : [],
-      ],
-    },
-  });
+        ]
+      : [],
+  ];
+
+  if (message_id > 0) {
+    bot.editMessageReplyMarkup(
+      { inline_keyboard },
+      {
+        chat_id,
+        message_id,
+      },
+    );
+  } else {
+    bot.sendMessage(chat_id, `Kataloglar ro'yxati`, {
+      reply_markup: {
+        remove_keyboard: true,
+        inline_keyboard,
+      },
+    });
+  }
 };
 
 const addCategory = async (chat_id) => {
@@ -112,7 +124,7 @@ const newCategory = async (msg) => {
   }
 };
 
-const paginationCategory = async (chat_id, action) => {
+const paginationCategory = async (chat_id, action, message_id = null) => {
   const user = await UserModel.findOne({ chat_id });
   let page = 1;
 
@@ -133,7 +145,7 @@ const paginationCategory = async (chat_id, action) => {
     { returnDocument: "after" },
   );
 
-  getAllCategories(chat_id, page);
+  getAllCategories(chat_id, page, message_id);
 };
 
 const showCategory = async (chat_id, category_id, page = 1) => {

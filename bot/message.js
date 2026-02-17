@@ -5,6 +5,7 @@ import {
   newCategory,
   saveCategory,
 } from "./helpers/category.js";
+import { endOrder } from "./helpers/order.js";
 import { addProductNext } from "./helpers/product.js";
 import { start, requestContact } from "./helpers/start.js";
 import { getAllUsers } from "./helpers/users.js";
@@ -12,12 +13,17 @@ import { getAllUsers } from "./helpers/users.js";
 bot.on("message", async (msg) => {
   const chat_id = msg.from.id;
   const text = msg.text;
+  console.log("message-msg", msg);
   console.log("message-text", text);
 
   const user = await UserModel.findOne({ chat_id }).lean();
 
   if (text === "/start") {
     start(msg);
+  }
+
+  if (msg.location && user.action === "order") {
+    endOrder(chat_id, msg.location);
   }
 
   if (user) {

@@ -75,43 +75,60 @@ const clearDraftProduct = async (chat_id) => {
   }
 };
 
-const showProduct = async (chat_id, product_id) => {
+const showProduct = async (
+  chat_id,
+  product_id,
+  count = 1,
+  message_id = null,
+) => {
   const user = await UserModel.findOne({ chat_id });
   const product = await ProductModel.findById(product_id)
     .populate("category")
     .lean();
 
-  bot.sendPhoto(chat_id, product.image, {
-    caption: `<b>${product.title}</b>\n📦 Turkum: ${product.category.title}\n🌿 Narhi: ${product.price} so'm\n🔥 Qisqa ma'lumoti: ${product.description}`,
-    parse_mode: "HTML",
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: "➖", callback_data: "less_count" },
-          { text: "1", callback_data: "1" },
-          { text: "➕", callback_data: "more_count" },
-        ],
-        user.admin
-          ? [
-              {
-                text: "✏️ Tahrirlash",
-                callback_data: `edit_product-${product_id}`,
-              },
-              {
-                text: "🗑️ O'chirish",
-                callback_data: `delete_product-${product_id}`,
-              },
-            ]
-          : [],
-        [
+  const inline_keyboard = [
+    [
+      { text: "➖", callback_data: `less_count-${product._id}-${count}` },
+      { text: `${count}`, callback_data: `${count}` },
+      { text: "➕", callback_data: `more_count-${product._id}-${count}` },
+    ],
+    user.admin
+      ? [
           {
-            text: "🛒 Korzinkaga qo'shish",
-            callback_data: "add_cart",
+            text: "✏️ Tahrirlash",
+            callback_data: `edit_product-${product_id}`,
           },
-        ],
-      ],
-    },
-  });
+          {
+            text: "🗑️ O'chirish",
+            callback_data: `delete_product-${product_id}`,
+          },
+        ]
+      : [],
+    [
+      {
+        text: "🛒 Korzinkaga qo'shish",
+        callback_data: `order_product-${product_id}-${count}`,
+      },
+    ],
+  ];
+
+  if (message_id > 0) {
+    bot.editMessageReplyMarkup(
+      { inline_keyboard },
+      {
+        chat_id,
+        message_id,
+      },
+    );
+  } else {
+    bot.sendPhoto(chat_id, product.image, {
+      caption: `<b>${product.title}</b>\n📦 Turkum: ${product.category.title}\n🌿 Narhi: ${product.price} so'm\n🔥 Qisqa ma'lumoti: ${product.description}`,
+      parse_mode: "HTML",
+      reply_markup: {
+        inline_keyboard,
+      },
+    });
+  }
 };
 
 const deleteProduct = async (chat_id, product_id, sure = false) => {

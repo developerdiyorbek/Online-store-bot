@@ -2,8 +2,11 @@ import CategoryModel from "../../models/category.model.js";
 import ProductModel from "../../models/product.model.js";
 import UserModel from "../../models/user.model.js";
 import bot from "../bot.js";
+import { clearDraftProduct } from "./product.js";
 
 const getAllCategories = async (chat_id, page = 1) => {
+  clearDraftProduct(chat_id); // draft mahsulotlarni tozalash
+
   const user = await UserModel.findOne({ chat_id });
 
   let limit = 5;
@@ -150,7 +153,8 @@ const showCategory = async (chat_id, category_id, page = 1) => {
 
   let limit = 5;
   let skip = (page - 1) * limit;
-  const products = await ProductModel.find({ category: category_id })
+
+  const products = await ProductModel.find({ category: category_id, status: 1 })
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
@@ -167,7 +171,7 @@ const showCategory = async (chat_id, category_id, page = 1) => {
     [
       {
         text: "Yangi mahsulot",
-        callback_data: `add_product_${category._id}`,
+        callback_data: `add_product-${category._id}`,
       },
     ],
     [

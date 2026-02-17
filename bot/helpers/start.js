@@ -11,7 +11,6 @@ async function start(msg) {
     await UserModel.create({
       chat_id,
       name: msg.from.first_name,
-      action: "start",
       admin: false,
       status: true,
       action: "request_contact",
